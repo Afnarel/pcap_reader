@@ -18,7 +18,6 @@ int main(int argc, char **argv)
   unsigned int pkt_counter=0;   // packet counter 
   unsigned long byte_counter=0; //total bytes seen in entire trace 
   unsigned long cur_counter=0; //counter for current 1-second interval 
-  //unsigned long max_volume = 0;  //max value of bytes in one-second interval 
   unsigned long current_ts=0; //current timestamp 
  
   //temporary packet buffers 
