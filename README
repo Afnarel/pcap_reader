@@ -1,2 +1,2 @@
 Il faut d'abord s'assurer que le paquet libpcap est installé sur le système par exemple avec la commande :
-# sudo apt-get install libpcap0.8
+# sudo apt-get install libpcap0.8 libpcap0.8-dev
