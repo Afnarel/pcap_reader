@@ -12,6 +12,16 @@ void process_file(char* filename);
 void process_packets_for(pcap_t* handle);
 void process_packet(u_char* packet, struct pcap_pkthdr header);
 
+// Global vars
+unsigned int nb_packets=0;   // Number of packets found
+unsigned int nb_ipv4_packets=0;   // Number of IPv4 packets found
+
+/* // Useless
+unsigned long byte_counter=0; //total bytes seen in entire trace 
+unsigned long cur_counter=0; //counter for current 1-second interval 
+unsigned long current_ts=0; //current timestamp
+*/
+
 int main(int argc, char* argv[]) {
 
   // Read command line arguments to get the file name
@@ -21,6 +31,9 @@ int main(int argc, char* argv[]) {
   }
 
   process_file(argv[1]);
+
+  printf("Total number of packets found: %u\n", nb_packets);
+  printf("Number of IPv4 packets found: %u\n", nb_ipv4_packets);
 
   return EXIT_SUCCESS;
 }
@@ -49,7 +62,7 @@ void process_file(char* filename) {
 
 /**
   Process the packets
-*/
+ */
 void process_packets_for(pcap_t* handle) {
 
   u_char* packet; // Packet
@@ -64,11 +77,6 @@ void process_packets_for(pcap_t* handle) {
 
 void process_packet(u_char* packet, struct pcap_pkthdr header) {
 
-  unsigned int pkt_counter=0;   // packet counter 
-  unsigned long byte_counter=0; //total bytes seen in entire trace 
-  unsigned long cur_counter=0; //counter for current 1-second interval 
-  unsigned long current_ts=0; //current timestamp 
-
   // header contains information about the packet (e.g. timestamp) 
   //u_char *pkt_ptr = (u_char *)packet; //cast a pointer to the packet data 
 
@@ -76,12 +84,22 @@ void process_packet(u_char* packet, struct pcap_pkthdr header) {
   int ether_type = ((int)(packet[12]) << 8) | (int)packet[13]; 
   int ether_offset = 0; 
 
-  if (ether_type == ETHER_TYPE_IP) //most common 
-    ether_offset = 14; 
-  else 
-    fprintf(stderr, "Unknown ethernet type, %04X, skipping...\n", ether_type); 
+  if (ether_type == ETHER_TYPE_IP) { // If we found an IPv4 packet
+    ether_offset = 14;
+    nb_ipv4_packets++;
+    printf("Found an IPv4 packet!\n");
+  }
 
-  //parse the IP header 
+  nb_packets++;
+
+  /*
+     else {
+     fprintf(stderr, "Unknown ethernet type, %04X, skipping...\n", ether_type);
+     }
+   */
+
+  /*
+  //parse the IP header
   packet += ether_offset;  //skip past the Ethernet II header 
   struct ip *ip_hdr = (struct ip *)packet; //point to an IP header structure 
 
@@ -99,5 +117,6 @@ void process_packet(u_char* packet, struct pcap_pkthdr header) {
   cur_counter += packet_length; 
   byte_counter += packet_length; //byte counter update 
   pkt_counter++; //increment number of packets seen 
+  */
 
 }
