@@ -21,6 +21,7 @@ void process_ipv4_packet(u_char* packet);
 // Global vars
 unsigned int nb_packets=0;   // Number of packets found
 unsigned int nb_ipv4_packets=0;   // Number of IPv4 packets found
+unsigned int nb_ipv6_packets=0;   // Number of IPv4 packets found
 
 /* // Useless
 unsigned long byte_counter=0; //total bytes seen in entire trace 
@@ -92,7 +93,6 @@ void process_packet(u_char* packet, struct pcap_pkthdr header) {
   if (ether_type == ETHER_TYPE_IP) { // If we found an IPv4 packet
     nb_ipv4_packets++;
     process_ipv4_packet(packet);
-    printf("Found an IPv4 packet!\n");
   }
 
   nb_packets++;
@@ -104,6 +104,11 @@ void process_ipv4_packet(u_char* packet) {
   struct ip *ip_hdr = (struct ip *)packet; // Get the IP header
   int packet_length = ntohs(ip_hdr->ip_len); // Get the packet
   int protocol_type = ip_hdr->ip_p; // Get the protocol
+  
+  printf("Found an IPv4 packet!\n");
+  printf("\tlength: %d\n", packet_length);
+  printf("\tType: ");
+  
   if(protocol_type == ICMP) {
     printf("ICMP\n");
   }
@@ -113,32 +118,30 @@ void process_ipv4_packet(u_char* packet) {
   else if(protocol_type == UDP) {
     printf("UDP\n");
   }
-  printf("%d\n", packet_length);
-  printf("%d\n", protocol_type);
 }
-  /*
-     else {
-     fprintf(stderr, "Unknown ethernet type, %04X, skipping...\n", ether_type);
-     }
-   */
+/*
+   else {
+   fprintf(stderr, "Unknown ethernet type, %04X, skipping...\n", ether_type);
+   }
+ */
 
-  /*
-  //parse the IP header
-  packet += ether_offset;  //skip past the Ethernet II header 
-  struct ip *ip_hdr = (struct ip *)packet; //point to an IP header structure 
+/*
+//parse the IP header
+packet += ether_offset;  //skip past the Ethernet II header 
+struct ip *ip_hdr = (struct ip *)packet; //point to an IP header structure 
 
-  int packet_length = ntohs(ip_hdr->ip_len); 
+int packet_length = ntohs(ip_hdr->ip_len); 
 
-  //check to see if the next second has started, for statistics purposes 
-  if (current_ts == 0) {  //this takes care of the very first packet seen 
-    current_ts = header.ts.tv_sec; 
-  } else if (header.ts.tv_sec > current_ts) { 
-    printf("%lu KBps\n", cur_counter/1000); //print 
-    cur_counter = 0; //reset counters 
-    current_ts = header.ts.tv_sec; //update time interval 
-  } 
+//check to see if the next second has started, for statistics purposes 
+if (current_ts == 0) {  //this takes care of the very first packet seen 
+current_ts = header.ts.tv_sec; 
+} else if (header.ts.tv_sec > current_ts) { 
+printf("%lu KBps\n", cur_counter/1000); //print 
+cur_counter = 0; //reset counters 
+current_ts = header.ts.tv_sec; //update time interval 
+} 
 
-  cur_counter += packet_length; 
-  byte_counter += packet_length; //byte counter update 
-  pkt_counter++; //increment number of packets seen 
-  */
+cur_counter += packet_length; 
+byte_counter += packet_length; //byte counter update 
+pkt_counter++; //increment number of packets seen 
+ */
