@@ -1,0 +1,1 @@
+gcc -Wall -o sniff -lpcap sniff-only.c
