@@ -6,11 +6,17 @@
 
 //defines for the packet type code in an ETHERNET header
 #define ETHER_TYPE_IP (0x0800)
+#define DATA_OFFSET 14
+
+#define ICMP 1
+#define TCP 6
+#define UDP 17
 
 // Functions prototypes
 void process_file(char* filename);
 void process_packets_for(pcap_t* handle);
 void process_packet(u_char* packet, struct pcap_pkthdr header);
+void process_ipv4_packet(u_char* packet);
 
 // Global vars
 unsigned int nb_packets=0;   // Number of packets found
@@ -80,18 +86,36 @@ void process_packet(u_char* packet, struct pcap_pkthdr header) {
   // header contains information about the packet (e.g. timestamp) 
   //u_char *pkt_ptr = (u_char *)packet; //cast a pointer to the packet data 
 
-  //parse the first (ethernet) header, grabbing the type field 
+  // Get the "Protocol type" field (12th & 13th bytes)
   int ether_type = ((int)(packet[12]) << 8) | (int)packet[13]; 
-  int ether_offset = 0; 
 
   if (ether_type == ETHER_TYPE_IP) { // If we found an IPv4 packet
-    ether_offset = 14;
     nb_ipv4_packets++;
+    process_ipv4_packet(packet);
     printf("Found an IPv4 packet!\n");
   }
 
   nb_packets++;
+}
 
+void process_ipv4_packet(u_char* packet) {
+  packet += DATA_OFFSET; // Skip until we find the data section
+
+  struct ip *ip_hdr = (struct ip *)packet; // Get the IP header
+  int packet_length = ntohs(ip_hdr->ip_len); // Get the packet
+  int protocol_type = ip_hdr->ip_p; // Get the protocol
+  if(protocol_type == ICMP) {
+    printf("ICMP\n");
+  }
+  else if(protocol_type == TCP) {
+    printf("TCP\n");
+  }
+  else if(protocol_type == UDP) {
+    printf("UDP\n");
+  }
+  printf("%d\n", packet_length);
+  printf("%d\n", protocol_type);
+}
   /*
      else {
      fprintf(stderr, "Unknown ethernet type, %04X, skipping...\n", ether_type);
@@ -118,5 +142,3 @@ void process_packet(u_char* packet, struct pcap_pkthdr header) {
   byte_counter += packet_length; //byte counter update 
   pkt_counter++; //increment number of packets seen 
   */
-
-}
