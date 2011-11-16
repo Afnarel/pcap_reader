@@ -5,7 +5,8 @@
 #include <arpa/inet.h>
 
 //defines for the packet type code in an ETHERNET header
-#define ETHER_TYPE_IP (0x0800)
+#define ETHER_TYPE_IPV4 (0x0800)
+#define ETHER_TYPE_IPV6 (0x86DD)
 
 // Functions prototypes
 void process_file(char* filename);
@@ -15,6 +16,7 @@ void process_packet(u_char* packet, struct pcap_pkthdr header);
 // Global vars
 unsigned int nb_packets=0;   // Number of packets found
 unsigned int nb_ipv4_packets=0;   // Number of IPv4 packets found
+unsigned int nb_ipv6_packets=0;   // Number of IPv4 packets found
 
 /* // Useless
 unsigned long byte_counter=0; //total bytes seen in entire trace 
@@ -84,10 +86,15 @@ void process_packet(u_char* packet, struct pcap_pkthdr header) {
   int ether_type = ((int)(packet[12]) << 8) | (int)packet[13]; 
   int ether_offset = 0; 
 
-  if (ether_type == ETHER_TYPE_IP) { // If we found an IPv4 packet
+  if (ether_type == ETHER_TYPE_IPV4) { // If we found an IPv4 packet
     ether_offset = 14;
     nb_ipv4_packets++;
-    printf("Found an IPv4 packet!\n");
+    printf("Found an IPv4 packet! %x \n", ether_type);
+  }
+  else if(ether_type == ETHER_TYPE_IPV6){
+    ether_offset = 14;
+    nb_ipv6_packets++;
+    printf("Found an IPv6 packet! %x \n", ether_type);
   }
 
   nb_packets++;

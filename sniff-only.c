@@ -10,7 +10,8 @@ main(int argc, char *argv[])
     const u_char   *packet;     /* The actual packet */
     struct pcap_pkthdr header;  /* The header that pcap gives us */
 
-    dev = pcap_lookupdev(errbuf);
+    //dev = pcap_lookupdev(errbuf);
+    dev = "wlan0";
     if (dev == NULL) {
         fprintf(stderr,
                 "Couldn't find default device (may be a permission issue): %s\n",
@@ -27,6 +28,8 @@ main(int argc, char *argv[])
         /* Grab a packet */
         packet = pcap_next(handle, &header);
         /* Application-specific code: here, we do something with the packet */
+        int ether_type = ((int)(packet[12]) << 8) | (int)packet[13]; 
+        printf("%d", ether_type);
     }
     /* And close the session */
     pcap_close(handle);
