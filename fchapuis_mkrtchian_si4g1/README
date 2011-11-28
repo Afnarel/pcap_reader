@@ -1,0 +1,40 @@
+===============================
+=== COMPILATION / EXECUTION ===
+===============================
+
+Le fichier "build" fait office de Makefile : il suffit de l'exécuter (./build) pour compiler le programme.
+Un exécutable nommé "reader" sera généré. Pour le lancer : 
+
+./reader fichier_de_capture.cap fichier_de_dump.cap
+
+Les fichiers "build" et "reader" doivent être exécutables. Si ce n'est pas le cas :
+	* chmod +x build
+	* chmod +x reader
+
+========================
+=== FICHIERS FOURNIS ===
+========================
+
+Deux fichiers de captures sont présents dans me répertoire :
+	* mydata.cap : contient des paquets de toutes sortes
+	* mydata2.cap : contient 10 paquets TCP dont deux ont des checksums invalides
+
+Un fichier de dump généré par l'application à partir de la capture mydata2.cap est présent (dumpmydata2.cap : 
+dans ce fichier, les checksums des 2 paquets invalides (à cause du *TCP checksum offloading*) ont été corrigés.
+
+
+===============
+=== SORTIES ===
+===============
+
+Le programme affiche, pour chaque paquet IPv4 trouvé, ses informations.
+
+Une foit le fichier analysé dans sont intégralité, il affiche :
+	* Le nombre total de paquets analysés
+	* Le nombre de paquets IPv4 trouvés
+	* Le nombre de paquets dont le checksum était incorrect et a été corrigé
+
+Afin d'obtenir une sortie supplémentaire permettant une meilleure compréhension de la façon dont est calculé
+le checksum, il est possible de décommenter la ligne "#define VERBOSE" en haut du code source avant de 
+recompiler le programme. Cela affichera, par groupes logiques, les mots de 16bits additionnés et la somme
+cumulée.
