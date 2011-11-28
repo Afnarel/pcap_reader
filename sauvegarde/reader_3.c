@@ -14,8 +14,6 @@
 #define TCP 6
 #define UDP 17
 
-//#define VERBOSE
-
 // Functions prototypes
 void process_file(char* filename);
 void process_packets_for(pcap_t* handle);
@@ -26,6 +24,7 @@ int my_checksum(u_char* data, int n);
 // Global vars
 unsigned int nb_packets=0;   // Number of packets found
 unsigned int nb_ipv4_packets=0;   // Number of IPv4 packets found
+unsigned int nb_ipv6_packets=0;   // Number of IPv4 packets found
 
 
 int main(int argc, char* argv[]) {
@@ -120,23 +119,13 @@ void process_ipv4_packet(u_char* packet) {
     printf("ICMP (%d)\n", protocol_type);
   }
   else if(protocol_type == TCP || protocol_type == UDP) {
-
-    // the only thing that differs to process the checksum of TCP and UDP packets
-    // is the position of the checksum that must be set to zero for the sum :
-    // It's 6 bytes into the UDP packet
-    // and 16 bytes into the TCP packet.
-    int offset; 
-
     packet += header_length; // Skip the IP header to get the UDP or TCP section
   
     int tlp_length = packet_length - header_length; // Transport Layer Protocol (UDP/TCP) length
 
     int checksum;
 
-    if(protocol_type == TCP) { // TCP
-      
-      offset = 16; // we will need to skip 
-
+    if(protocol_type == TCP) {
       printf("TCP (%d)\n", protocol_type);
 
       struct tcphdr *tcp_hdr = (struct tcphdr *)packet;
@@ -147,9 +136,6 @@ void process_ipv4_packet(u_char* packet) {
       printf("\t\tChecksum TCP: 0x%4.4x\n", checksum);
     }
     else { // UDP
-
-      offset = 6;
-
       printf("UDP (%d)\n", protocol_type);
 
       struct udphdr *udp_hdr = (struct udphdr *)packet;
@@ -161,97 +147,67 @@ void process_ipv4_packet(u_char* packet) {
       printf("\t\tChecksum UDP: 0x%4.4x\n", checksum);
     }
 
-    /* ********************************************* *
-     * Let's process the UDP/TCP checksum ourselves! *
-     * ********************************************* */
+    /* ***************************************** *
+     * Let's process the UDP checksum ourselves! *
+     * ***************************************** */
     int somme = 0;
 
     /* ************* *
      * Pseudo header *
      * ************* */
 
-    // Source IP
+    // IP Source
     somme += my_checksum((u_char* )&ip_src, 4);
-    #ifdef VERBOSE
     printf("Somme: %d\n", somme);
-    #endif
 
-    // Destination IP
+    // IP destination
     somme += my_checksum((u_char* )&ip_dst, 4);
-    #ifdef VERBOSE
     printf("Somme: %d\n", somme);
-    #endif
 
     u_char zeroAndProtocol[2];
     zeroAndProtocol[0] = 0x00; // Zeros
     zeroAndProtocol[1] = protocol_type; // Protocol
     somme += my_checksum(zeroAndProtocol, 2);
-    #ifdef VERBOSE
     printf("Somme: %d\n", somme);
-    #endif
 
     // Length
     int ns_tlp_length = htons(tlp_length);
     somme += my_checksum((u_char *)&ns_tlp_length, 2);
-    #ifdef VERBOSE
     printf("Somme: %d\n", somme);
-    #endif
 
 
-    /* ***************** *
-     * TCP or UDP packet *
-     * ***************** */
+    /* ********** *
+     * Paquet UDP *
+     * ********** */
 
-    // Sum everything before the checksum (source port + dest port + length) for UDP
-    somme += my_checksum(packet, offset); 
-    #ifdef VERBOSE
+    somme += my_checksum(packet, 6); // source port + dest port + length
     printf("Somme: %d\n", somme);
-    #endif
+    packet += 8; // Skip the checksum (checksum == 0x00)
 
-    packet += (offset + 2); // Skip the checksum (checksum == 0x00)
-
-    // Sum everything after the checksum
-    somme += my_checksum(packet, tlp_length - (offset + 2));
-    #ifdef VERBOSE
+    somme += my_checksum(packet, tlp_length - 8); // Data
     printf("Somme: %d\n", somme);
-    #endif
 
 
-    /* ****************************************** *
-     * One's complement of the sum with the carry *
-     * ****************************************** */
+    /* *************************************** *
+     * Complement à 1 de la somme avec retenue *
+     * *************************************** */
 
     unsigned short cs = (somme>>16) + (somme&0xffff);
     cs += (cs>>16);
     cs = ~cs;
 
-    printf("\t\tMon Checksum : 0x%4.4x\n", cs);
-
-    if(cs != checksum) {
-      printf("=====> ERROR: checksum mismatch <=====\n");
-    }
+    printf("\t\tMon Checksum UDP: 0x%4.4x\n", cs);
 
   }
 }
 
-/**
-  Returns the sum of the 2-bytes (= 16-bits) words of "data".
-  n is the number of bytes in data.
-
-  For instance, if data contains 9DA9675C(16) (and n=4), this function will
-  return 9DA9(16) + 675C(16) = 10505(16) = 66821(10)
-*/
 int my_checksum(u_char* data, int n) {
-  #ifdef VERBOSE
-  printf("n = %d\n", n);
-  #endif
+  printf("NNNN: %d\n", n);
   int i, somme=0;
   for(i=1; i<n; i+=2) {
     int two_bytes = ((int)(data[i-1]) << 8) | (int)data[i];
     somme += two_bytes;
-    #ifdef VERBOSE
     printf("Add: %4.4X\n", two_bytes);
-    #endif
   }
   return somme;
 }
